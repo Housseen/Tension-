@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1f3a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Tension Artérielle</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1225;
+    --surface: #1a1f3a;
+    --surface2: #222847;
+    --accent: #e8734a;
+    --accent2: #5b8dee;
+    --red: #e05c6f;
+    --green: #4caf88;
+    --text: #f0f2ff;
+    --text2: #9aa0c0;
+    --border: rgba(255,255,255,0.08);
+    --mama: #e8734a;
+    --papa: #5b8dee;
+    --sugar: #a78bfa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* BG texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 10%, rgba(91,141,238,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(232,115,74,0.10) 0%, transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+
+  /* HEADER */
+  header {
+    padding: 20px 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+  .subtitle { font-size: 11px; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+  /* PERSON TABS */
+  .person-tabs {
+    display: flex;
+    gap: 10px;
+    padding: 18px 20px 0;
+  }
+  .tab {
+    flex: 1;
+    padding: 14px 12px;
+    border-radius: 16px;
+    border: 2px solid transparent;
+    background: var(--surface);
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: center;
+  }
+  .tab.active-mama { border-color: var(--mama); background: rgba(232,115,74,0.12); }
+  .tab.active-papa { border-color: var(--papa); background: rgba(91,141,238,0.12); }
+  .tab-icon { font-size: 24px; margin-bottom: 4px; }
+  .tab-name { font-size: 14px; font-weight: 600; }
+  .tab-count { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+  /* FORM CARD */
+  .form-card {
+    margin: 14px 20px 0;
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid var(--border);
+  }
+  .form-title {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 16px;
+  }
+
+  .bp-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text2);
+    text-align: center;
+  }
+  .num-input {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    text-align: center;
+    padding: 12px 6px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .num-input:focus { border-color: var(--accent2); }
+  .num-input.sys:focus { border-color: var(--red); }
+  .num-input.dia:focus { border-color: var(--green); }
+  .num-input.pulse:focus { border-color: var(--accent); }
+  .num-input::placeholder { color: rgba(255,255,255,0.15); }
+
+  .bp-unit {
+    font-size: 9px;
+    color: var(--text2);
+    text-align: center;
+    margin-top: -2px;
+  }
+
+  /* HAND SELECTOR */
+  .hand-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .hand-btn {
+    flex: 1;
+    padding: 11px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .hand-btn.selected {
+    border-color: var(--accent2);
+    color: var(--text);
+    background: rgba(91,141,238,0.12);
+  }
+
+  /* DATETIME */
+  .datetime-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .date-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    color-scheme: dark;
+  }
+  .date-input:focus { border-color: var(--accent2); }
+  .now-btn {
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text2);
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .now-btn:active { background: var(--surface2); }
+
+  /* SUBMIT */
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .submit-mama { background: linear-gradient(135deg, #e8734a, #d4522a); color: white; }
+  .submit-papa { background: linear-gradient(135deg, #5b8dee, #3a68cc); color: white; }
+  .submit-btn:active { transform: scale(0.97); opacity: 0.9; }
+
+  /* HISTORY */
+  .history-section {
+    flex: 1;
+    padding: 14px 20px 20px;
+  }
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .history-title {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+  .export-row {
+    display: flex;
+    gap: 6px;
+  }
+  .export-btn {
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .export-btn:active { background: var(--surface2); color: var(--text); }
+
+  /* FILTER ROW */
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .filter-btn {
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-btn.active { color: var(--text); }
+  .filter-all.active { border-color: var(--text2); background: rgba(255,255,255,0.06); }
+  .filter-mama.active { border-color: var(--mama); background: rgba(232,115,74,0.12); color: var(--mama); }
+  .filter-papa.active { border-color: var(--papa); background: rgba(91,141,238,0.12); color: var(--papa); }
+
+  /* RECORDS */
+  .records-list { display: flex; flex-direction: column; gap: 8px; }
+  .record-card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 14px 16px;
+    border-left: 3px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  .record-card.mama { border-left-color: var(--mama); }
+  .record-card.papa { border-left-color: var(--papa); }
+
+  .record-person { font-size: 18px; }
+  .record-main { flex: 1; }
+  .record-bp {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+  .record-bp .slash { color: var(--text2); font-size: 18px; }
+  .record-meta {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 4px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .record-pulse {
+    text-align: right;
+  }
+  .pulse-val {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--accent);
+  }
+  .pulse-label { font-size: 10px; color: var(--text2); }
+  .record-delete {
+    background: none;
+    border: none;
+    color: var(--text2);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    line-height: 1;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+  }
+  .record-delete:active { opacity: 1; color: var(--red); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text2);
+    font-size: 14px;
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    transition: transform 0.3s ease;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Scrollable history */
+  .records-scroll { max-height: 360px; overflow-y: auto; padding-right: 2px; }
+  .records-scroll::-webkit-scrollbar { width: 3px; }
+  .records-scroll::-webkit-scrollbar-track { background: transparent; }
+  .records-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+  .num-input.glyc:focus { border-color: var(--sugar); }
+
+  /* GLYCÉMIE SECTION (mama only) */
+  .glyc-section {
+    margin-bottom: 14px;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(167,139,250,0.07);
+    border: 1.5px solid rgba(167,139,250,0.2);
+  }
+  .glyc-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .glyc-label-title {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--sugar);
+    font-weight: 600;
+  }
+  .glyc-badge {
+    font-size: 9px;
+    background: rgba(167,139,250,0.2);
+    color: var(--sugar);
+    padding: 2px 7px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  .glyc-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+  .glyc-input-wrap { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .glyc-timing-wrap { flex: 1.4; display: flex; flex-direction: column; gap: 6px; }
+  .glyc-timing {
+    display: flex;
+    gap: 5px;
+  }
+  .timing-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border-radius: 9px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text2);
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .timing-btn.selected {
+    border-color: var(--sugar);
+    color: var(--sugar);
+    background: rgba(167,139,250,0.12);
+  }
+
+  .bp-status.status-sugar-normal { background: rgba(76,175,136,0.2); color: var(--green); }
+  .bp-status.status-sugar-high { background: rgba(224,92,111,0.2); color: var(--red); }
+  .bp-status.status-sugar-low { background: rgba(91,141,238,0.2); color: var(--accent2); }
+  .bp-status.status-sugar-elevated { background: rgba(167,139,250,0.2); color: var(--sugar); }
+
+  .record-glyc {
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--sugar);
+  }
+  .record-glyc-val { font-family: 'DM Serif Display', serif; font-size: 15px; }
+
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  .bp-status {
+    display: inline-block;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .status-normal { background: rgba(76,175,136,0.2); color: var(--green); }
+  .status-high { background: rgba(224,92,111,0.2); color: var(--red); }
+  .status-low { background: rgba(91,141,238,0.2); color: var(--accent2); }
+  .status-elevated { background: rgba(232,115,74,0.2); color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div>
+      <div class="logo">Tension<span>+</span></div>
+      <div class="subtitle">Tension · Glycémie · Suivi</div>
+    </div>
+    <div style="font-size:28px">🫀</div>
+  </header>
+
+  <!-- PERSON SELECTOR -->
+  <div class="person-tabs">
+    <div class="tab active-mama" id="tab-mama" onclick="selectPerson('mama')">
+      <div class="tab-icon">👩</div>
+      <div class="tab-name" style="color:var(--mama)">Maman</div>
+      <div class="tab-count" id="count-mama">0 mesure(s)</div>
+    </div>
+    <div class="tab" id="tab-papa" onclick="selectPerson('papa')">
+      <div class="tab-icon">👨</div>
+      <div class="tab-name" style="color:var(--papa)">Papa</div>
+      <div class="tab-count" id="count-papa">0 mesure(s)</div>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <div class="form-card">
+    <div class="form-title" id="form-title">Nouvelle mesure — Maman</div>
+
+    <div class="bp-row">
+      <div class="input-group">
+        <div class="input-label">Systolique</div>
+        <input class="num-input sys" type="number" id="sys" placeholder="120" min="60" max="250" inputmode="numeric">
+        <div class="bp-unit">mmHg</div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">Diastolique</div>
+        <input class="num-input dia" type="number" id="dia" placeholder="80" min="40" max="150" inputmode="numeric">
+        <div class="bp-unit">mmHg</div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">Pouls</div>
+        <input class="num-input pulse" type="number" id="pulse" placeholder="70" min="30" max="200" inputmode="numeric">
+        <div class="bp-unit">bpm</div>
+      </div>
+    </div>
+
+    <div class="hand-row">
+      <button class="hand-btn selected" id="btn-left" onclick="selectHand('gauche')">🤚 Main gauche</button>
+      <button class="hand-btn" id="btn-right" onclick="selectHand('droite')">👋 Main droite</button>
+    </div>
+
+    <!-- GLYCÉMIE — Maman only -->
+    <div class="glyc-section" id="glyc-section">
+      <div class="glyc-header">
+        <span>🩸</span>
+        <span class="glyc-label-title">Glycémie</span>
+        <span class="glyc-badge">Maman uniquement</span>
+      </div>
+      <div class="glyc-row">
+        <div class="glyc-input-wrap">
+          <div class="input-label">Taux</div>
+          <input class="num-input glyc" type="number" id="glyc" placeholder="5.5" min="1" max="30" step="0.1" inputmode="decimal" style="font-size:24px">
+          <div class="bp-unit">mmol/L</div>
+        </div>
+        <div class="glyc-timing-wrap">
+          <div class="input-label">Moment</div>
+          <div class="glyc-timing">
+            <button class="timing-btn selected" id="t-jeun" onclick="selectTiming('jeun')">À jeun</button>
+            <button class="timing-btn" id="t-apres" onclick="selectTiming('apres')">Après repas</button>
+            <button class="timing-btn" id="t-avant" onclick="selectTiming('avant')">Avant repas</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="datetime-row">
+      <input class="date-input" type="datetime-local" id="datetime">
+      <button class="now-btn" onclick="setNow()">🕐 Maintenant</button>
+    </div>
+
+    <button class="submit-btn submit-mama" id="submit-btn" onclick="addRecord()">
+      ➕ Ajouter pour Maman
+    </button>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="history-section">
+    <div class="history-header">
+      <div class="history-title">Historique</div>
+      <div class="export-row">
+        <button class="export-btn" onclick="exportExcel()">📊 Excel</button>
+        <button class="export-btn" onclick="exportPDF()">📄 PDF</button>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <button class="filter-btn filter-all active" id="f-all" onclick="setFilter('all')">Tous</button>
+      <button class="filter-btn filter-mama" id="f-mama" onclick="setFilter('mama')">👩 Maman</button>
+      <button class="filter-btn filter-papa" id="f-papa" onclick="setFilter('papa')">👨 Papa</button>
+    </div>
+
+    <div class="records-scroll">
+      <div class="records-list" id="records-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'tension_records_v2';
+let currentPerson = 'mama';
+let currentHand = 'gauche';
+let currentTiming = 'jeun';
+let currentFilter = 'all';
+let records = [];
+
+// Load from storage
+function loadRecords() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    records = raw ? JSON.parse(raw) : [];
+  } catch(e) { records = []; }
+  renderAll();
+}
+
+function saveRecords() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+}
+
+function selectPerson(p) {
+  currentPerson = p;
+  document.getElementById('tab-mama').className = 'tab' + (p === 'mama' ? ' active-mama' : '');
+  document.getElementById('tab-papa').className = 'tab' + (p === 'papa' ? ' active-papa' : '');
+  document.getElementById('form-title').textContent = `Nouvelle mesure — ${p === 'mama' ? 'Maman' : 'Papa'}`;
+  const btn = document.getElementById('submit-btn');
+  btn.className = `submit-btn submit-${p}`;
+  btn.textContent = `➕ Ajouter pour ${p === 'mama' ? 'Maman' : 'Papa'}`;
+  // Show glycémie only for Maman
+  document.getElementById('glyc-section').style.display = p === 'mama' ? 'block' : 'none';
+}
+
+function selectHand(h) {
+  currentHand = h;
+  document.getElementById('btn-left').className = 'hand-btn' + (h === 'gauche' ? ' selected' : '');
+  document.getElementById('btn-right').className = 'hand-btn' + (h === 'droite' ? ' selected' : '');
+}
+
+function selectTiming(t) {
+  currentTiming = t;
+  ['jeun','apres','avant'].forEach(x => {
+    document.getElementById('t-' + x).className = 'timing-btn' + (t === x ? ' selected' : '');
+  });
+}
+
+function setNow() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  document.getElementById('datetime').value = local.toISOString().slice(0, 16);
+}
+
+function getBPStatus(sys, dia) {
+  if (sys < 90 || dia < 60) return { label: 'Basse', cls: 'status-low' };
+  if (sys < 120 && dia < 80) return { label: 'Normale', cls: 'status-normal' };
+  if (sys < 130 && dia < 80) return { label: 'Élevée', cls: 'status-elevated' };
+  return { label: 'Haute', cls: 'status-high' };
+}
+
+function getGlycStatus(val, timing) {
+  if (!val) return null;
+  if (timing === 'jeun') {
+    if (val < 3.9) return { label: 'Basse', cls: 'status-sugar-low' };
+    if (val <= 5.5) return { label: 'Normale', cls: 'status-sugar-normal' };
+    if (val <= 6.9) return { label: 'Élevée', cls: 'status-sugar-elevated' };
+    return { label: 'Haute', cls: 'status-sugar-high' };
+  } else {
+    // after/before meal threshold slightly higher
+    if (val < 3.9) return { label: 'Basse', cls: 'status-sugar-low' };
+    if (val <= 7.8) return { label: 'Normale', cls: 'status-sugar-normal' };
+    if (val <= 11.0) return { label: 'Élevée', cls: 'status-sugar-elevated' };
+    return { label: 'Haute', cls: 'status-sugar-high' };
+  }
+}
+
+function addRecord() {
+  const sys = parseInt(document.getElementById('sys').value);
+  const dia = parseInt(document.getElementById('dia').value);
+  const pulse = parseInt(document.getElementById('pulse').value);
+  const dt = document.getElementById('datetime').value;
+  const glycRaw = document.getElementById('glyc').value;
+  const glyc = glycRaw !== '' ? parseFloat(parseFloat(glycRaw).toFixed(1)) : null;
+
+  if (!sys || !dia || !pulse) { showToast('⚠️ Remplissez tous les champs'); return; }
+  if (sys < 60 || sys > 250) { showToast('⚠️ Systolique invalide (60–250)'); return; }
+  if (dia < 40 || dia > 150) { showToast('⚠️ Diastolique invalide (40–150)'); return; }
+  if (pulse < 30 || pulse > 200) { showToast('⚠️ Pouls invalide (30–200)'); return; }
+  if (!dt) { showToast('⚠️ Choisissez une date'); return; }
+  if (currentPerson === 'mama' && glyc !== null && (glyc < 1 || glyc > 30)) {
+    showToast('⚠️ Glycémie invalide (1–30 mmol/L)'); return;
+  }
+
+  const record = {
+    id: Date.now(),
+    person: currentPerson,
+    sys, dia, pulse,
+    hand: currentHand,
+    datetime: dt,
+    timestamp: new Date(dt).getTime(),
+    glyc: currentPerson === 'mama' ? glyc : null,
+    glycTiming: currentPerson === 'mama' ? currentTiming : null
+  };
+
+  records.unshift(record);
+  saveRecords();
+  renderAll();
+
+  document.getElementById('sys').value = '';
+  document.getElementById('dia').value = '';
+  document.getElementById('pulse').value = '';
+  document.getElementById('glyc').value = '';
+
+  showToast(`✅ Mesure ajoutée pour ${currentPerson === 'mama' ? 'Maman' : 'Papa'}`);
+}
+
+function deleteRecord(id) {
+  if (!confirm('Supprimer cette mesure ?')) return;
+  records = records.filter(r => r.id !== id);
+  saveRecords();
+  renderAll();
+  showToast('🗑️ Mesure supprimée');
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  ['all','mama','papa'].forEach(x => {
+    const btn = document.getElementById('f-' + x);
+    btn.className = `filter-btn filter-${x}` + (f === x ? ' active' : '');
+  });
+  renderRecords();
+}
+
+function formatDate(dtStr) {
+  const d = new Date(dtStr);
+  return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' })
+    + ' ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+}
+
+function renderAll() {
+  updateCounts();
+  renderRecords();
+}
+
+function updateCounts() {
+  const mc = records.filter(r => r.person === 'mama').length;
+  const pc = records.filter(r => r.person === 'papa').length;
+  document.getElementById('count-mama').textContent = mc + ' mesure(s)';
+  document.getElementById('count-papa').textContent = pc + ' mesure(s)';
+}
+
+function renderRecords() {
+  const list = document.getElementById('records-list');
+  let filtered = currentFilter === 'all' ? records : records.filter(r => r.person === currentFilter);
+  // sort newest first
+  filtered = [...filtered].sort((a, b) => b.timestamp - a.timestamp);
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div>Aucune mesure${currentFilter !== 'all' ? ' pour ' + (currentFilter === 'mama' ? 'Maman' : 'Papa') : ''}</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(r => {
+    const status = getBPStatus(r.sys, r.dia);
+    const icon = r.person === 'mama' ? '👩' : '👨';
+    const handIcon = r.hand === 'gauche' ? '🤚' : '👋';
+    const timingLabel = { jeun: 'À jeun', apres: 'Après repas', avant: 'Avant repas' };
+    const glycLine = (r.person === 'mama' && r.glyc != null)
+      ? (() => {
+          const gs = getGlycStatus(r.glyc, r.glycTiming);
+          return `<div class="record-glyc">🩸 <span class="record-glyc-val">${r.glyc}</span> mmol/L
+            <span style="font-size:10px;color:var(--text2)">${timingLabel[r.glycTiming] || ''}</span>
+            ${gs ? `<span class="bp-status ${gs.cls}" style="margin-left:2px">${gs.label}</span>` : ''}
+          </div>`;
+        })()
+      : '';
+    return `<div class="record-card ${r.person}">
+      <div class="record-person">${icon}</div>
+      <div class="record-main">
+        <div class="record-bp">
+          <span style="color:var(--red)">${r.sys}</span>
+          <span class="slash">/</span>
+          <span style="color:var(--green)">${r.dia}</span>
+          <span style="font-size:12px;color:var(--text2);margin-left:6px">mmHg</span>
+        </div>
+        <div class="record-meta">
+          <span>${formatDate(r.datetime)}</span>
+          <span>${handIcon} ${r.hand === 'gauche' ? 'Gauche' : 'Droite'}</span>
+          <span class="bp-status ${status.cls}">${status.label}</span>
+        </div>
+        ${glycLine}
+      </div>
+      <div class="record-pulse">
+        <div class="pulse-val">${r.pulse}</div>
+        <div class="pulse-label">bpm</div>
+      </div>
+      <button class="record-delete" onclick="deleteRecord(${r.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// EXPORT EXCEL
+function exportExcel() {
+  if (records.length === 0) { showToast('Aucune donnée à exporter'); return; }
+  const wb = XLSX.utils.book_new();
+  const timingLabel = { jeun: 'À jeun', apres: 'Après repas', avant: 'Avant repas' };
+
+  // Maman sheet (with glycémie)
+  const mamaData = records
+    .filter(r => r.person === 'mama')
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .map(r => {
+      const row = {
+        'Date & Heure': formatDate(r.datetime),
+        'Systolique (mmHg)': r.sys,
+        'Diastolique (mmHg)': r.dia,
+        'Pouls (bpm)': r.pulse,
+        'Main': r.hand === 'gauche' ? 'Gauche' : 'Droite',
+        'Statut Tension': getBPStatus(r.sys, r.dia).label,
+        'Glycémie (mmol/L)': r.glyc != null ? r.glyc : '',
+        'Moment Glycémie': r.glycTiming ? timingLabel[r.glycTiming] : '',
+        'Statut Glycémie': (r.glyc != null && r.glycTiming) ? (getGlycStatus(r.glyc, r.glycTiming)?.label || '') : ''
+      };
+      return row;
+    });
+
+  if (mamaData.length > 0) {
+    const ws = XLSX.utils.json_to_sheet(mamaData);
+    ws['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 17 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 15 }];
+    XLSX.utils.book_append_sheet(wb, ws, 'Maman');
+  }
+
+  // Papa sheet (no glycémie)
+  const papaData = records
+    .filter(r => r.person === 'papa')
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .map(r => ({
+      'Date & Heure': formatDate(r.datetime),
+      'Systolique (mmHg)': r.sys,
+      'Diastolique (mmHg)': r.dia,
+      'Pouls (bpm)': r.pulse,
+      'Main': r.hand === 'gauche' ? 'Gauche' : 'Droite',
+      'Statut': getBPStatus(r.sys, r.dia).label
+    }));
+
+  if (papaData.length > 0) {
+    const ws = XLSX.utils.json_to_sheet(papaData);
+    ws['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 17 }, { wch: 12 }, { wch: 10 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, ws, 'Papa');
+  }
+
+  XLSX.writeFile(wb, 'tension_glycemie.xlsx');
+  showToast('📊 Export Excel en cours…');
+}
+
+// EXPORT PDF
+function exportPDF() {
+  if (records.length === 0) { showToast('Aucune donnée à exporter'); return; }
+
+  const sorted = [...records].sort((a, b) => a.timestamp - b.timestamp);
+  const timingLabel = { jeun: 'À jeun', apres: 'Après repas', avant: 'Avant repas' };
+
+  function rowsMama() {
+    return sorted.filter(r => r.person === 'mama').map(r => {
+      const st = getBPStatus(r.sys, r.dia);
+      const stBg = st.cls.includes('high')?'#fde':st.cls.includes('low')?'#def':st.cls.includes('elev')?'#fee':'#dfd';
+      let glycCell = '—';
+      if (r.glyc != null) {
+        const gs = getGlycStatus(r.glyc, r.glycTiming);
+        const gsBg = gs ? (gs.cls.includes('high')?'#fde':gs.cls.includes('low')?'#def':gs.cls.includes('elev')?'#f0e8ff':'#dfd') : '#eee';
+        glycCell = `<span style="font-weight:600;color:#7c3aed">${r.glyc}</span> mmol/L
+          <span style="font-size:10px;color:#888">${timingLabel[r.glycTiming]||''}</span>
+          ${gs ? `<span style="padding:1px 6px;border-radius:4px;font-size:10px;background:${gsBg}">${gs.label}</span>` : ''}`;
+      }
+      return `<tr>
+        <td>${formatDate(r.datetime)}</td>
+        <td style="color:#c0392b;font-weight:600">${r.sys}</td>
+        <td style="color:#27ae60;font-weight:600">${r.dia}</td>
+        <td style="color:#e67e22;font-weight:600">${r.pulse}</td>
+        <td>${r.hand === 'gauche' ? '🤚 Gauche' : '👋 Droite'}</td>
+        <td><span style="padding:2px 8px;border-radius:4px;font-size:11px;background:${stBg}">${st.label}</span></td>
+        <td>${glycCell}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function rowsPapa() {
+    return sorted.filter(r => r.person === 'papa').map(r => {
+      const st = getBPStatus(r.sys, r.dia);
+      const stBg = st.cls.includes('high')?'#fde':st.cls.includes('low')?'#def':st.cls.includes('elev')?'#fee':'#dfd';
+      return `<tr>
+        <td>${formatDate(r.datetime)}</td>
+        <td style="color:#c0392b;font-weight:600">${r.sys}</td>
+        <td style="color:#27ae60;font-weight:600">${r.dia}</td>
+        <td style="color:#e67e22;font-weight:600">${r.pulse}</td>
+        <td>${r.hand === 'gauche' ? '🤚 Gauche' : '👋 Droite'}</td>
+        <td><span style="padding:2px 8px;border-radius:4px;font-size:11px;background:${stBg}">${st.label}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Tension & Glycémie</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; color: #222; }
+    h1 { color: #1a1f3a; font-size: 24px; margin-bottom: 4px; }
+    .sub { color: #666; font-size: 13px; margin-bottom: 24px; }
+    h2 { font-size: 16px; margin: 20px 0 8px; padding: 8px 14px; border-radius: 6px; }
+    .mama-h { background: #fff3ee; color: #c0521a; }
+    .papa-h { background: #eef3ff; color: #2a4ec0; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
+    th { background: #1a1f3a; color: white; padding: 9px 10px; text-align: left; }
+    td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    .footer { margin-top: 30px; font-size: 11px; color: #aaa; }
+    @media print { body { padding: 10px; } }
+  </style></head><body>
+  <h1>🫀 Tension & Glycémie</h1>
+  <div class="sub">Exporté le ${new Date().toLocaleDateString('fr-FR')} · ${records.length} mesure(s) au total</div>
+  
+  ${sorted.filter(r=>r.person==='mama').length > 0 ? `
+  <h2 class="mama-h">👩 Maman — ${sorted.filter(r=>r.person==='mama').length} mesure(s)</h2>
+  <table><thead><tr><th>Date & Heure</th><th>Systolique</th><th>Diastolique</th><th>Pouls</th><th>Main</th><th>Tension</th><th>Glycémie</th></tr></thead>
+  <tbody>${rowsMama()}</tbody></table>` : ''}
+
+  ${sorted.filter(r=>r.person==='papa').length > 0 ? `
+  <h2 class="papa-h">👨 Papa — ${sorted.filter(r=>r.person==='papa').length} mesure(s)</h2>
+  <table><thead><tr><th>Date & Heure</th><th>Systolique</th><th>Diastolique</th><th>Pouls</th><th>Main</th><th>Statut</th></tr></thead>
+  <tbody>${rowsPapa()}</tbody></table>` : ''}
+
+  <div class="footer">Tension+ · Application de suivi tension artérielle & glycémie</div>
+  <script>window.onload = () => window.print();<\/script>
+  </body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  showToast('📄 PDF prêt à imprimer / sauvegarder');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// INIT
+setNow();
+loadRecords();
+</script>
+</body>
+</html>
