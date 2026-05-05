@@ -560,6 +560,11 @@
         <button class="export-btn" onclick="exportPDF()">📄 PDF</button>
       </div>
     </div>
+    <div style="font-size:10px;color:var(--text2);margin-bottom:10px;padding:8px 10px;background:var(--surface);border-radius:10px;border:1px solid var(--border);line-height:1.6">
+      📊 Seuils adaptés à l'âge · Papa 70 ans · Maman 61 ans<br>
+      🫀 Tension: Normale 100–139/60–89 · Élevée 140–159 · Haute ≥160<br>
+      🩸 Glycémie à jeun: Normale 4.0–6.5 · Élevée 6.6–8.0 · Haute >8.0 mmol/L
+    </div>
 
     <div class="filter-row">
       <button class="filter-btn filter-all active" id="f-all" onclick="setFilter('all')">Tous</button>
@@ -629,51 +634,85 @@ function setNow() {
   document.getElementById('datetime').value = local.toISOString().slice(0, 16);
 }
 
-function getBPStatus(sys, dia) {
-  if (sys < 90 || dia < 60) return { label: 'Basse', cls: 'status-low' };
-  if (sys < 120 && dia < 80) return { label: 'Normale', cls: 'status-normal' };
-  if (sys < 130 && dia < 80) return { label: 'Élevée', cls: 'status-elevated' };
-  return { label: 'Haute', cls: 'status-high' };
+// Age-adjusted BP thresholds (ESC/ACC guidelines for 60+ patients)
+// Papa: 70 ans — Maman: 61 ans
+// Both are 60+ so same geriatric BP targets apply
+function getBPStatus(sys, dia, person) {
+  // Geriatric thresholds: more tolerant upper range, stricter on low end
+  if (sys < 100 || dia < 60) return { label: 'Basse ⚠️', cls: 'status-low' };
+  if (sys <= 139 && dia <= 89) return { label: 'Normale', cls: 'status-normal' };
+  if (sys <= 159 && dia <= 99) return { label: 'Élevée', cls: 'status-elevated' };
+  return { label: 'Haute ⚠️', cls: 'status-high' };
 }
 
+// Age-adjusted glycémie thresholds for Maman (61 ans)
+// Geriatric guidelines allow slightly higher targets to avoid hypoglycemia risk
 function getGlycStatus(val, timing) {
   if (!val) return null;
   if (timing === 'jeun') {
-    if (val < 3.9) return { label: 'Basse', cls: 'status-sugar-low' };
-    if (val <= 5.5) return { label: 'Normale', cls: 'status-sugar-normal' };
-    if (val <= 6.9) return { label: 'Élevée', cls: 'status-sugar-elevated' };
-    return { label: 'Haute', cls: 'status-sugar-high' };
+    if (val < 4.0) return { label: 'Basse ⚠️', cls: 'status-sugar-low' };
+    if (val <= 6.5) return { label: 'Normale', cls: 'status-sugar-normal' };
+    if (val <= 8.0) return { label: 'Élevée', cls: 'status-sugar-elevated' };
+    return { label: 'Haute ⚠️', cls: 'status-sugar-high' };
   } else {
-    // after/before meal threshold slightly higher
-    if (val < 3.9) return { label: 'Basse', cls: 'status-sugar-low' };
-    if (val <= 7.8) return { label: 'Normale', cls: 'status-sugar-normal' };
-    if (val <= 11.0) return { label: 'Élevée', cls: 'status-sugar-elevated' };
-    return { label: 'Haute', cls: 'status-sugar-high' };
+    // avant/après repas — higher tolerance for elderly
+    if (val < 4.0) return { label: 'Basse ⚠️', cls: 'status-sugar-low' };
+    if (val <= 9.0) return { label: 'Normale', cls: 'status-sugar-normal' };
+    if (val <= 12.0) return { label: 'Élevée', cls: 'status-sugar-elevated' };
+    return { label: 'Haute ⚠️', cls: 'status-sugar-high' };
   }
 }
 
 function addRecord() {
-  const sys = parseInt(document.getElementById('sys').value);
-  const dia = parseInt(document.getElementById('dia').value);
-  const pulse = parseInt(document.getElementById('pulse').value);
+  const sysRaw = document.getElementById('sys').value;
+  const diaRaw = document.getElementById('dia').value;
+  const pulseRaw = document.getElementById('pulse').value;
   const dt = document.getElementById('datetime').value;
-  const glycRaw = document.getElementById('glyc').value;
+  const glycRaw = document.getElementById('glyc') ? document.getElementById('glyc').value : '';
+
+  const sys = sysRaw !== '' ? parseInt(sysRaw) : null;
+  const dia = diaRaw !== '' ? parseInt(diaRaw) : null;
+  const pulse = pulseRaw !== '' ? parseInt(pulseRaw) : null;
   const glyc = glycRaw !== '' ? parseFloat(parseFloat(glycRaw).toFixed(1)) : null;
 
-  if (!sys || !dia || !pulse) { showToast('⚠️ Remplissez tous les champs'); return; }
-  if (sys < 60 || sys > 250) { showToast('⚠️ Systolique invalide (60–250)'); return; }
-  if (dia < 40 || dia > 150) { showToast('⚠️ Diastolique invalide (40–150)'); return; }
-  if (pulse < 30 || pulse > 200) { showToast('⚠️ Pouls invalide (30–200)'); return; }
   if (!dt) { showToast('⚠️ Choisissez une date'); return; }
-  if (currentPerson === 'mama' && glyc !== null && (glyc < 1 || glyc > 30)) {
+
+  // For Maman: need at least BP (all 3 fields) OR glycémie — not necessarily both
+  // For Papa: need all 3 BP fields
+  const hasBP = sys !== null && dia !== null && pulse !== null;
+  const hasGlyc = currentPerson === 'mama' && glyc !== null;
+
+  // If user started filling BP partially, validate it
+  const partialBP = (sys !== null || dia !== null || pulse !== null);
+
+  if (currentPerson === 'mama') {
+    if (!hasBP && !hasGlyc) {
+      showToast('⚠️ Entrez la tension ou la glycémie'); return;
+    }
+    if (partialBP && !hasBP) {
+      showToast('⚠️ Complétez les 3 champs tension'); return;
+    }
+  } else {
+    if (!hasBP) { showToast('⚠️ Remplissez les 3 champs tension'); return; }
+  }
+
+  // Validate BP values if provided
+  if (hasBP) {
+    if (sys < 60 || sys > 250) { showToast('⚠️ Systolique invalide (60–250)'); return; }
+    if (dia < 40 || dia > 150) { showToast('⚠️ Diastolique invalide (40–150)'); return; }
+    if (pulse < 30 || pulse > 200) { showToast('⚠️ Pouls invalide (30–200)'); return; }
+  }
+  if (hasGlyc && (glyc < 1 || glyc > 30)) {
     showToast('⚠️ Glycémie invalide (1–30 mmol/L)'); return;
   }
 
   const record = {
     id: Date.now(),
     person: currentPerson,
-    sys, dia, pulse,
-    hand: currentHand,
+    sys: hasBP ? sys : null,
+    dia: hasBP ? dia : null,
+    pulse: hasBP ? pulse : null,
+    hand: hasBP ? currentHand : null,
     datetime: dt,
     timestamp: new Date(dt).getTime(),
     glyc: currentPerson === 'mama' ? glyc : null,
@@ -687,7 +726,8 @@ function addRecord() {
   document.getElementById('sys').value = '';
   document.getElementById('dia').value = '';
   document.getElementById('pulse').value = '';
-  document.getElementById('glyc').value = '';
+  const glycEl = document.getElementById('glyc');
+  if (glycEl) glycEl.value = '';
 
   showToast(`✅ Mesure ajoutée pour ${currentPerson === 'mama' ? 'Maman' : 'Papa'}`);
 }
@@ -739,10 +779,28 @@ function renderRecords() {
   }
 
   list.innerHTML = filtered.map(r => {
-    const status = getBPStatus(r.sys, r.dia);
+    const status = r.sys && r.dia ? getBPStatus(r.sys, r.dia) : null;
     const icon = r.person === 'mama' ? '👩' : '👨';
     const handIcon = r.hand === 'gauche' ? '🤚' : '👋';
     const timingLabel = { jeun: 'À jeun', apres: 'Après repas', avant: 'Avant repas' };
+
+    const bpSection = r.sys && r.dia && r.pulse ? `
+        <div class="record-bp">
+          <span style="color:var(--red)">${r.sys}</span>
+          <span class="slash">/</span>
+          <span style="color:var(--green)">${r.dia}</span>
+          <span style="font-size:12px;color:var(--text2);margin-left:6px">mmHg</span>
+        </div>
+        <div class="record-meta">
+          <span>${formatDate(r.datetime)}</span>
+          ${r.hand ? `<span>${handIcon} ${r.hand === 'gauche' ? 'Gauche' : 'Droite'}</span>` : ''}
+          ${status ? `<span class="bp-status ${status.cls}">${status.label}</span>` : ''}
+        </div>` : `
+        <div class="record-meta" style="margin-top:4px">
+          <span>${formatDate(r.datetime)}</span>
+          <span style="color:var(--text2);font-size:11px">Tension non mesurée</span>
+        </div>`;
+
     const glycLine = (r.person === 'mama' && r.glyc != null)
       ? (() => {
           const gs = getGlycStatus(r.glyc, r.glycTiming);
@@ -752,26 +810,19 @@ function renderRecords() {
           </div>`;
         })()
       : '';
+
+    const pulseSection = r.pulse ? `<div class="record-pulse">
+        <div class="pulse-val">${r.pulse}</div>
+        <div class="pulse-label">bpm</div>
+      </div>` : '';
+
     return `<div class="record-card ${r.person}">
       <div class="record-person">${icon}</div>
       <div class="record-main">
-        <div class="record-bp">
-          <span style="color:var(--red)">${r.sys}</span>
-          <span class="slash">/</span>
-          <span style="color:var(--green)">${r.dia}</span>
-          <span style="font-size:12px;color:var(--text2);margin-left:6px">mmHg</span>
-        </div>
-        <div class="record-meta">
-          <span>${formatDate(r.datetime)}</span>
-          <span>${handIcon} ${r.hand === 'gauche' ? 'Gauche' : 'Droite'}</span>
-          <span class="bp-status ${status.cls}">${status.label}</span>
-        </div>
+        ${bpSection}
         ${glycLine}
       </div>
-      <div class="record-pulse">
-        <div class="pulse-val">${r.pulse}</div>
-        <div class="pulse-label">bpm</div>
-      </div>
+      ${pulseSection}
       <button class="record-delete" onclick="deleteRecord(${r.id})">✕</button>
     </div>`;
   }).join('');
