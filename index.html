@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+x  <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -463,6 +463,124 @@
   .status-high { background: rgba(224,92,111,0.2); color: var(--red); }
   .status-low { background: rgba(91,141,238,0.2); color: var(--accent2); }
   .status-elevated { background: rgba(232,115,74,0.2); color: var(--accent); }
+
+  /* SETTINGS BUTTON */
+  .settings-open-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1;
+  }
+  .settings-open-btn:active { background: var(--surface2); }
+
+  .settings-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    backdrop-filter: blur(3px);
+  }
+  .settings-overlay.open { display: block; }
+
+  .settings-drawer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    z-index: 101;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    max-height: 88dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  .settings-drawer.open { transform: translateY(0); }
+
+  .settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .settings-title { font-size: 16px; font-weight: 600; }
+  .settings-close {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text2);
+    font-size: 14px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  .settings-body {
+    overflow-y: auto;
+    padding: 16px 20px 30px;
+    flex: 1;
+  }
+  .settings-body::-webkit-scrollbar { width: 3px; }
+  .settings-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+  .settings-section {
+    margin-bottom: 16px;
+    padding: 16px;
+    background: var(--surface2);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+  }
+  .settings-section-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+  .settings-hint { font-size: 10px; color: var(--text2); margin-bottom: 12px; }
+
+  .settings-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .settings-label { font-size: 13px; color: var(--text2); }
+
+  .unit-toggle { display: flex; background: var(--bg); border-radius: 10px; padding: 3px; gap: 2px; }
+  .unit-btn {
+    padding: 7px 14px; border-radius: 8px; border: none;
+    background: transparent; color: var(--text2); font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+  }
+  .unit-btn.active { background: var(--accent2); color: white; }
+
+  .threshold-group { margin-bottom: 10px; }
+  .threshold-label { font-size: 11px; margin-bottom: 5px; font-weight: 500; }
+  .status-low-label { color: var(--accent2); }
+  .status-normal-label { color: var(--green); }
+  .status-elevated-label { color: var(--accent); }
+
+  .threshold-inputs { display: flex; align-items: center; gap: 6px; }
+  .thresh-input {
+    width: 72px; background: var(--bg); border: 1.5px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: 'DM Serif Display', serif;
+    font-size: 18px; text-align: center; padding: 8px 4px; outline: none; -webkit-appearance: none;
+  }
+  .thresh-input:focus { border-color: var(--accent2); }
+  .thresh-sep { color: var(--text2); font-size: 16px; }
+  .thresh-unit-label { font-size: 11px; color: var(--text2); margin-left: 4px; }
+  .threshold-note { font-size: 10px; color: var(--text2); margin-top: 6px; font-style: italic; }
+
+  .settings-actions { display: flex; gap: 10px; margin-top: 6px; }
+  .settings-save-btn {
+    flex: 2; padding: 14px; border-radius: 14px; border: none;
+    background: linear-gradient(135deg, #5b8dee, #3a68cc); color: white;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .settings-save-btn:active { transform: scale(0.97); }
+  .settings-reset-btn {
+    flex: 1; padding: 14px; border-radius: 14px; border: 1.5px solid var(--border);
+    background: var(--bg); color: var(--text2); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+  }
+  .settings-reset-btn:active { background: var(--surface2); }
 </style>
 </head>
 <body>
@@ -473,7 +591,7 @@
       <div class="logo">Tension<span>+</span></div>
       <div class="subtitle">Tension · Glycémie · Suivi</div>
     </div>
-    <div style="font-size:28px">🫀</div>
+    <button class="settings-open-btn" onclick="openSettings()">⚙️</button>
   </header>
 
   <!-- PERSON SELECTOR -->
@@ -498,12 +616,12 @@
       <div class="input-group">
         <div class="input-label">Systolique</div>
         <input class="num-input sys" type="number" id="sys" placeholder="120" min="60" max="250" inputmode="numeric">
-        <div class="bp-unit">mmHg</div>
+        <div class="bp-unit bp-unit-display">mmHg</div>
       </div>
       <div class="input-group">
         <div class="input-label">Diastolique</div>
         <input class="num-input dia" type="number" id="dia" placeholder="80" min="40" max="150" inputmode="numeric">
-        <div class="bp-unit">mmHg</div>
+        <div class="bp-unit bp-unit-display">mmHg</div>
       </div>
       <div class="input-group">
         <div class="input-label">Pouls</div>
@@ -527,8 +645,8 @@
       <div class="glyc-row">
         <div class="glyc-input-wrap">
           <div class="input-label">Taux</div>
-          <input class="num-input glyc" type="number" id="glyc" placeholder="5.5" min="1" max="30" step="0.1" inputmode="decimal" style="font-size:24px">
-          <div class="bp-unit">mmol/L</div>
+          <input class="num-input glyc" type="number" id="glyc" placeholder="100" min="1" max="600" step="1" inputmode="decimal" style="font-size:24px">
+          <div class="bp-unit" id="glyc-unit-display">mg/dL</div>
         </div>
         <div class="glyc-timing-wrap">
           <div class="input-label">Moment</div>
@@ -560,10 +678,10 @@
         <button class="export-btn" onclick="exportPDF()">📄 PDF</button>
       </div>
     </div>
-    <div style="font-size:10px;color:var(--text2);margin-bottom:10px;padding:8px 10px;background:var(--surface);border-radius:10px;border:1px solid var(--border);line-height:1.6">
+    <div id="thresholds-legend" style="font-size:10px;color:var(--text2);margin-bottom:10px;padding:8px 10px;background:var(--surface);border-radius:10px;border:1px solid var(--border);line-height:1.6">
       📊 Seuils adaptés à l'âge · Papa 70 ans · Maman 61 ans<br>
-      🫀 Tension: Normale 100–139/60–89 · Élevée 140–159 · Haute ≥160<br>
-      🩸 Glycémie à jeun: Normale 4.0–6.5 · Élevée 6.6–8.0 · Haute >8.0 mmol/L
+      🫀 Tension: Normale 100–139/60–89 · Élevée 140–159 · Haute ≥160 mmHg<br>
+      🩸 Glycémie à jeun: Normale 72–117 · Élevée ≤144 · Haute >144 mg/dL
     </div>
 
     <div class="filter-row">
@@ -579,11 +697,120 @@
 
 </div>
 
+<!-- SETTINGS PANEL -->
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettings()"></div>
+<div class="settings-drawer" id="settings-drawer">
+  <div class="settings-header">
+    <div class="settings-title">⚙️ Paramètres</div>
+    <button class="settings-close" onclick="closeSettings()">✕</button>
+  </div>
+  <div class="settings-body">
+
+    <!-- UNITS -->
+    <div class="settings-section">
+      <div class="settings-section-title">📐 Unités de mesure</div>
+
+      <div class="settings-row">
+        <div class="settings-label">Tension artérielle</div>
+        <div class="unit-toggle" id="unit-bp-toggle">
+          <button class="unit-btn active" id="ubp-mmhg" onclick="setUnitBP('mmHg')">mmHg</button>
+          <button class="unit-btn" id="ubp-kpa" onclick="setUnitBP('kPa')">kPa</button>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">Glycémie</div>
+        <div class="unit-toggle" id="unit-glyc-toggle">
+          <button class="unit-btn active" id="uglc-mmol" onclick="setUnitGlyc('mmol/L')">mmol/L</button>
+          <button class="unit-btn" id="uglc-mgdl" onclick="setUnitGlyc('mg/dL')">mg/dL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BP THRESHOLDS -->
+    <div class="settings-section">
+      <div class="settings-section-title">🫀 Seuils Tension (mmHg)</div>
+      <div class="settings-hint">Systolique / Diastolique</div>
+
+      <div class="threshold-group">
+        <div class="threshold-label status-low-label">🔵 Basse — en dessous de</div>
+        <div class="threshold-inputs">
+          <input class="thresh-input" type="number" id="bp-low-sys" placeholder="100"> <span class="thresh-sep">/</span>
+          <input class="thresh-input" type="number" id="bp-low-dia" placeholder="60">
+        </div>
+      </div>
+      <div class="threshold-group">
+        <div class="threshold-label status-normal-label">🟢 Normale — jusqu'à</div>
+        <div class="threshold-inputs">
+          <input class="thresh-input" type="number" id="bp-normal-sys" placeholder="139"> <span class="thresh-sep">/</span>
+          <input class="thresh-input" type="number" id="bp-normal-dia" placeholder="89">
+        </div>
+      </div>
+      <div class="threshold-group">
+        <div class="threshold-label status-elevated-label">🟠 Élevée — jusqu'à</div>
+        <div class="threshold-inputs">
+          <input class="thresh-input" type="number" id="bp-elevated-sys" placeholder="159"> <span class="thresh-sep">/</span>
+          <input class="thresh-input" type="number" id="bp-elevated-dia" placeholder="99">
+        </div>
+      </div>
+      <div class="threshold-note">Au-delà → 🔴 Haute ⚠️</div>
+    </div>
+
+    <!-- GLYC THRESHOLDS -->
+    <div class="settings-section">
+      <div class="settings-section-title">🩸 Seuils Glycémie à jeun</div>
+      <div class="settings-hint">Valeurs en mmol/L (converties auto si mg/dL)</div>
+
+      <div class="threshold-group">
+        <div class="threshold-label status-low-label">🔵 Basse — en dessous de</div>
+        <div class="threshold-inputs">
+          <input class="thresh-input" type="number" id="glyc-low" placeholder="4.0" step="0.1">
+          <span class="thresh-unit-label" id="glyc-thresh-unit">mmol/L</span>
+        </div>
+      </div>
+      <div class="threshold-group">
+        <div class="threshold-label status-normal-label">🟢 Normale — jusqu'à</div>
+        <div class="threshold-inputs">
+          <input class="thresh-input" type="number" id="glyc-normal" placeholder="6.5" step="0.1">
+          <span class="thresh-unit-label" id="glyc-thresh-unit2">mmol/L</span>
+        </div>
+      </div>
+      <div class="threshold-group">
+        <div class="threshold-label status-elevated-label">🟠 Élevée — jusqu'à</div>
+        <div class="threshold-inputs">
+          <input class="thresh-input" type="number" id="glyc-elevated" placeholder="8.0" step="0.1">
+          <span class="thresh-unit-label" id="glyc-thresh-unit3">mmol/L</span>
+        </div>
+      </div>
+      <div class="threshold-note">Au-delà → 🔴 Haute ⚠️ · Après repas: +2.5 mmol/L</div>
+    </div>
+
+    <div class="settings-actions">
+      <button class="settings-save-btn" onclick="saveSettings()">💾 Enregistrer</button>
+      <button class="settings-reset-btn" onclick="resetSettings()">↺ Réinitialiser</button>
+    </div>
+
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
 const STORAGE_KEY = 'tension_records_v2';
+const SETTINGS_KEY = 'tension_settings_v1';
+
+// Default thresholds — mg/dL for glycémie (Bionime GM550), mmHg for BP
+const DEFAULT_SETTINGS = {
+  unitBP: 'mmHg',
+  unitGlyc: 'mg/dL',
+  bp: { lowSys: 100, lowDia: 60, normalSys: 139, normalDia: 89, elevatedSys: 159, elevatedDia: 99 },
+  glyc: { low: 72, normal: 117, elevated: 144 }
+  // mg/dL equivalents: 4.0→72, 6.5→117, 8.0→144 mmol/L
+  // après/avant repas offset: +45 mg/dL (= +2.5 mmol/L × 18)
+};
+
+let settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
 let currentPerson = 'mama';
 let currentHand = 'gauche';
 let currentTiming = 'jeun';
@@ -596,6 +823,15 @@ function loadRecords() {
     const raw = localStorage.getItem(STORAGE_KEY);
     records = raw ? JSON.parse(raw) : [];
   } catch(e) { records = []; }
+  loadSettings();
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) settings = Object.assign(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), JSON.parse(raw));
+  } catch(e) { settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); }
+  applyUnitsToUI();
   renderAll();
 }
 
@@ -634,34 +870,154 @@ function setNow() {
   document.getElementById('datetime').value = local.toISOString().slice(0, 16);
 }
 
-// Age-adjusted BP thresholds (ESC/ACC guidelines for 60+ patients)
-// Papa: 70 ans — Maman: 61 ans
-// Both are 60+ so same geriatric BP targets apply
-function getBPStatus(sys, dia, person) {
-  // Geriatric thresholds: more tolerant upper range, stricter on low end
-  if (sys < 100 || dia < 60) return { label: 'Basse ⚠️', cls: 'status-low' };
-  if (sys <= 139 && dia <= 89) return { label: 'Normale', cls: 'status-normal' };
-  if (sys <= 159 && dia <= 99) return { label: 'Élevée', cls: 'status-elevated' };
+// Status functions — use live settings thresholds
+function getBPStatus(sys, dia) {
+  const b = settings.bp;
+  if (sys < b.lowSys || dia < b.lowDia) return { label: 'Basse ⚠️', cls: 'status-low' };
+  if (sys <= b.normalSys && dia <= b.normalDia) return { label: 'Normale', cls: 'status-normal' };
+  if (sys <= b.elevatedSys && dia <= b.elevatedDia) return { label: 'Élevée', cls: 'status-elevated' };
   return { label: 'Haute ⚠️', cls: 'status-high' };
 }
 
-// Age-adjusted glycémie thresholds for Maman (61 ans)
-// Geriatric guidelines allow slightly higher targets to avoid hypoglycemia risk
 function getGlycStatus(val, timing) {
-  if (!val) return null;
-  if (timing === 'jeun') {
-    if (val < 4.0) return { label: 'Basse ⚠️', cls: 'status-sugar-low' };
-    if (val <= 6.5) return { label: 'Normale', cls: 'status-sugar-normal' };
-    if (val <= 8.0) return { label: 'Élevée', cls: 'status-sugar-elevated' };
-    return { label: 'Haute ⚠️', cls: 'status-sugar-high' };
-  } else {
-    // avant/après repas — higher tolerance for elderly
-    if (val < 4.0) return { label: 'Basse ⚠️', cls: 'status-sugar-low' };
-    if (val <= 9.0) return { label: 'Normale', cls: 'status-sugar-normal' };
-    if (val <= 12.0) return { label: 'Élevée', cls: 'status-sugar-elevated' };
-    return { label: 'Haute ⚠️', cls: 'status-sugar-high' };
+  if (val == null) return null;
+  const g = settings.glyc;
+  // After/before meal: higher tolerance (+45 mg/dL or +2.5 mmol/L)
+  const isAfterMeal = timing === 'apres' || timing === 'avant';
+  const offset = isAfterMeal ? (settings.unitGlyc === 'mg/dL' ? 45 : 2.5) : 0;
+  if (val < g.low) return { label: 'Basse ⚠️', cls: 'status-sugar-low' };
+  if (val <= g.normal + offset) return { label: 'Normale', cls: 'status-sugar-normal' };
+  if (val <= g.elevated + offset) return { label: 'Élevée', cls: 'status-sugar-elevated' };
+  return { label: 'Haute ⚠️', cls: 'status-sugar-high' };
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────
+function openSettings() {
+  populateSettingsForm();
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-drawer').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.getElementById('settings-drawer').classList.remove('open');
+}
+
+function populateSettingsForm() {
+  document.getElementById('bp-low-sys').value = settings.bp.lowSys;
+  document.getElementById('bp-low-dia').value = settings.bp.lowDia;
+  document.getElementById('bp-normal-sys').value = settings.bp.normalSys;
+  document.getElementById('bp-normal-dia').value = settings.bp.normalDia;
+  document.getElementById('bp-elevated-sys').value = settings.bp.elevatedSys;
+  document.getElementById('bp-elevated-dia').value = settings.bp.elevatedDia;
+  document.getElementById('glyc-low').value = settings.glyc.low;
+  document.getElementById('glyc-normal').value = settings.glyc.normal;
+  document.getElementById('glyc-elevated').value = settings.glyc.elevated;
+  updateUnitButtons();
+  updateGlycUnitLabels();
+}
+
+function saveSettings() {
+  const bp = settings.bp;
+  bp.lowSys      = parseFloat(document.getElementById('bp-low-sys').value)      || DEFAULT_SETTINGS.bp.lowSys;
+  bp.lowDia      = parseFloat(document.getElementById('bp-low-dia').value)      || DEFAULT_SETTINGS.bp.lowDia;
+  bp.normalSys   = parseFloat(document.getElementById('bp-normal-sys').value)   || DEFAULT_SETTINGS.bp.normalSys;
+  bp.normalDia   = parseFloat(document.getElementById('bp-normal-dia').value)   || DEFAULT_SETTINGS.bp.normalDia;
+  bp.elevatedSys = parseFloat(document.getElementById('bp-elevated-sys').value) || DEFAULT_SETTINGS.bp.elevatedSys;
+  bp.elevatedDia = parseFloat(document.getElementById('bp-elevated-dia').value) || DEFAULT_SETTINGS.bp.elevatedDia;
+  settings.glyc.low      = parseFloat(document.getElementById('glyc-low').value)      || DEFAULT_SETTINGS.glyc.low;
+  settings.glyc.normal   = parseFloat(document.getElementById('glyc-normal').value)   || DEFAULT_SETTINGS.glyc.normal;
+  settings.glyc.elevated = parseFloat(document.getElementById('glyc-elevated').value) || DEFAULT_SETTINGS.glyc.elevated;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  applyUnitsToUI();
+  renderAll();
+  closeSettings();
+  showToast('✅ Paramètres enregistrés');
+}
+
+function resetSettings() {
+  if (!confirm('Réinitialiser tous les paramètres aux valeurs par défaut ?')) return;
+  settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  populateSettingsForm();
+  applyUnitsToUI();
+  renderAll();
+  showToast('↺ Paramètres réinitialisés');
+}
+
+function setUnitBP(unit) {
+  settings.unitBP = unit;
+  updateUnitButtons();
+}
+
+function setUnitGlyc(unit) {
+  if (unit === settings.unitGlyc) return;
+  // Convert threshold input values to the new unit
+  const factor = unit === 'mg/dL' ? 18 : 1 / 18;
+  const round = unit === 'mg/dL'
+    ? v => Math.round(v * 18)
+    : v => Math.round(v / 18 * 10) / 10;
+  ['glyc-low','glyc-normal','glyc-elevated'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.value) el.value = round(parseFloat(el.value));
+  });
+  settings.unitGlyc = unit;
+  updateUnitButtons();
+  updateGlycUnitLabels();
+  // Update glyc input step/placeholder
+  const glycInput = document.getElementById('glyc');
+  if (glycInput) {
+    glycInput.placeholder = unit === 'mg/dL' ? '100' : '5.5';
+    glycInput.step = unit === 'mg/dL' ? '1' : '0.1';
+    glycInput.max = unit === 'mg/dL' ? '600' : '33';
   }
 }
+
+function updateUnitButtons() {
+  document.getElementById('ubp-mmhg').className = 'unit-btn' + (settings.unitBP === 'mmHg' ? ' active' : '');
+  document.getElementById('ubp-kpa').className  = 'unit-btn' + (settings.unitBP === 'kPa'  ? ' active' : '');
+  document.getElementById('uglc-mmol').className = 'unit-btn' + (settings.unitGlyc === 'mmol/L' ? ' active' : '');
+  document.getElementById('uglc-mgdl').className = 'unit-btn' + (settings.unitGlyc === 'mg/dL'  ? ' active' : '');
+}
+
+function updateGlycUnitLabels() {
+  ['glyc-thresh-unit','glyc-thresh-unit2','glyc-thresh-unit3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = settings.unitGlyc;
+  });
+}
+
+function applyUnitsToUI() {
+  // Glyc unit in form
+  const gu = document.getElementById('glyc-unit-display');
+  if (gu) gu.textContent = settings.unitGlyc;
+  // Glyc input range/step/placeholder
+  const glycInput = document.getElementById('glyc');
+  if (glycInput) {
+    glycInput.placeholder = settings.unitGlyc === 'mg/dL' ? '100' : '5.5';
+    glycInput.step = settings.unitGlyc === 'mg/dL' ? '1' : '0.1';
+    glycInput.max = settings.unitGlyc === 'mg/dL' ? '600' : '33';
+  }
+  // BP unit labels in form
+  document.querySelectorAll('.bp-unit-display').forEach(el => {
+    el.textContent = settings.unitBP;
+  });
+  // Update legend
+  updateLegend();
+}
+
+function updateLegend() {
+  const el = document.getElementById('thresholds-legend');
+  if (!el) return;
+  const b = settings.bp;
+  const g = settings.glyc;
+  const gu = settings.unitGlyc;
+  el.innerHTML =
+    `📊 Seuils adaptés · Papa 70 ans · Maman 61 ans<br>` +
+    `🫀 Tension: Normale ${b.lowSys}–${b.normalSys}/${b.lowDia}–${b.normalDia} · Élevée ≤${b.elevatedSys} · Haute ≥${b.elevatedSys+1} mmHg<br>` +
+    `🩸 Glycémie à jeun: Normale ${g.low}–${g.normal} · Élevée ≤${g.elevated} · Haute >${g.elevated} ${gu}`;
+}
+// ── END SETTINGS ───────────────────────────────────────────────────────────
 
 function addRecord() {
   const sysRaw = document.getElementById('sys').value;
@@ -702,8 +1058,10 @@ function addRecord() {
     if (dia < 40 || dia > 150) { showToast('⚠️ Diastolique invalide (40–150)'); return; }
     if (pulse < 30 || pulse > 200) { showToast('⚠️ Pouls invalide (30–200)'); return; }
   }
-  if (hasGlyc && (glyc < 1 || glyc > 30)) {
-    showToast('⚠️ Glycémie invalide (1–30 mmol/L)'); return;
+  const maxGlyc = settings.unitGlyc === 'mg/dL' ? 600 : 33;
+  const minGlyc = settings.unitGlyc === 'mg/dL' ? 18 : 1;
+  if (hasGlyc && (glyc < minGlyc || glyc > maxGlyc)) {
+    showToast(`⚠️ Glycémie invalide (${minGlyc}–${maxGlyc} ${settings.unitGlyc})`); return;
   }
 
   const record = {
@@ -804,7 +1162,7 @@ function renderRecords() {
     const glycLine = (r.person === 'mama' && r.glyc != null)
       ? (() => {
           const gs = getGlycStatus(r.glyc, r.glycTiming);
-          return `<div class="record-glyc">🩸 <span class="record-glyc-val">${r.glyc}</span> mmol/L
+          return `<div class="record-glyc">🩸 <span class="record-glyc-val">${r.glyc}</span> ${settings.unitGlyc}
             <span style="font-size:10px;color:var(--text2)">${timingLabel[r.glycTiming] || ''}</span>
             ${gs ? `<span class="bp-status ${gs.cls}" style="margin-left:2px">${gs.label}</span>` : ''}
           </div>`;
@@ -832,6 +1190,8 @@ function renderRecords() {
 function exportExcel() {
   if (records.length === 0) { showToast('Aucune donnée à exporter'); return; }
   const wb = XLSX.utils.book_new();
+  const bpUnit = settings.unitBP;
+  const gUnit = settings.unitGlyc;
   const timingLabel = { jeun: 'À jeun', apres: 'Après repas', avant: 'Avant repas' };
 
   // Maman sheet (with glycémie)
@@ -841,12 +1201,12 @@ function exportExcel() {
     .map(r => {
       const row = {
         'Date & Heure': formatDate(r.datetime),
-        'Systolique (mmHg)': r.sys,
-        'Diastolique (mmHg)': r.dia,
+        [`Systolique (${bpUnit})`]: r.sys,
+        [`Diastolique (${bpUnit})`]: r.dia,
         'Pouls (bpm)': r.pulse,
         'Main': r.hand === 'gauche' ? 'Gauche' : 'Droite',
-        'Statut Tension': getBPStatus(r.sys, r.dia).label,
-        'Glycémie (mmol/L)': r.glyc != null ? r.glyc : '',
+        'Statut Tension': r.sys && r.dia ? getBPStatus(r.sys, r.dia).label : '—',
+        [`Glycémie (${gUnit})`]: r.glyc != null ? r.glyc : '',
         'Moment Glycémie': r.glycTiming ? timingLabel[r.glycTiming] : '',
         'Statut Glycémie': (r.glyc != null && r.glycTiming) ? (getGlycStatus(r.glyc, r.glycTiming)?.label || '') : ''
       };
@@ -865,11 +1225,11 @@ function exportExcel() {
     .sort((a, b) => a.timestamp - b.timestamp)
     .map(r => ({
       'Date & Heure': formatDate(r.datetime),
-      'Systolique (mmHg)': r.sys,
-      'Diastolique (mmHg)': r.dia,
+      [`Systolique (${bpUnit})`]: r.sys,
+      [`Diastolique (${bpUnit})`]: r.dia,
       'Pouls (bpm)': r.pulse,
       'Main': r.hand === 'gauche' ? 'Gauche' : 'Droite',
-      'Statut': getBPStatus(r.sys, r.dia).label
+      'Statut': r.sys && r.dia ? getBPStatus(r.sys, r.dia).label : '—'
     }));
 
   if (papaData.length > 0) {
@@ -888,6 +1248,8 @@ function exportPDF() {
 
   const sorted = [...records].sort((a, b) => a.timestamp - b.timestamp);
   const timingLabel = { jeun: 'À jeun', apres: 'Après repas', avant: 'Avant repas' };
+  const bpUnit = settings.unitBP;
+  const gUnit = settings.unitGlyc;
 
   function rowsMama() {
     return sorted.filter(r => r.person === 'mama').map(r => {
@@ -897,7 +1259,7 @@ function exportPDF() {
       if (r.glyc != null) {
         const gs = getGlycStatus(r.glyc, r.glycTiming);
         const gsBg = gs ? (gs.cls.includes('high')?'#fde':gs.cls.includes('low')?'#def':gs.cls.includes('elev')?'#f0e8ff':'#dfd') : '#eee';
-        glycCell = `<span style="font-weight:600;color:#7c3aed">${r.glyc}</span> mmol/L
+        glycCell = `<span style="font-weight:600;color:#7c3aed">${r.glyc}</span> ${gUnit}
           <span style="font-size:10px;color:#888">${timingLabel[r.glycTiming]||''}</span>
           ${gs ? `<span style="padding:1px 6px;border-radius:4px;font-size:10px;background:${gsBg}">${gs.label}</span>` : ''}`;
       }
@@ -949,12 +1311,12 @@ function exportPDF() {
   
   ${sorted.filter(r=>r.person==='mama').length > 0 ? `
   <h2 class="mama-h">👩 Maman — ${sorted.filter(r=>r.person==='mama').length} mesure(s)</h2>
-  <table><thead><tr><th>Date & Heure</th><th>Systolique</th><th>Diastolique</th><th>Pouls</th><th>Main</th><th>Tension</th><th>Glycémie</th></tr></thead>
+  <table><thead><tr><th>Date & Heure</th><th>Systolique (${bpUnit})</th><th>Diastolique (${bpUnit})</th><th>Pouls</th><th>Main</th><th>Tension</th><th>Glycémie (${gUnit})</th></tr></thead>
   <tbody>${rowsMama()}</tbody></table>` : ''}
 
   ${sorted.filter(r=>r.person==='papa').length > 0 ? `
   <h2 class="papa-h">👨 Papa — ${sorted.filter(r=>r.person==='papa').length} mesure(s)</h2>
-  <table><thead><tr><th>Date & Heure</th><th>Systolique</th><th>Diastolique</th><th>Pouls</th><th>Main</th><th>Statut</th></tr></thead>
+  <table><thead><tr><th>Date & Heure</th><th>Systolique (${bpUnit})</th><th>Diastolique (${bpUnit})</th><th>Pouls</th><th>Main</th><th>Statut</th></tr></thead>
   <tbody>${rowsPapa()}</tbody></table>` : ''}
 
   <div class="footer">Tension+ · Application de suivi tension artérielle & glycémie</div>
@@ -976,7 +1338,7 @@ function showToast(msg) {
 
 // INIT
 setNow();
-loadRecords();
+loadRecords(); // calls loadSettings() → applyUnitsToUI() → renderAll()
 </script>
 </body>
 </html>
